@@ -18,6 +18,15 @@ image = (  # build up a Modal Image to run ComfyUI, step by step
     )
 )
 
+# install bcat-civitai
+image = (
+    # get deps for rust
+    image.apt_install("curl", "build-essential", "libssl-dev", "pkg-config")
+    .run_commands("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y")
+    .run_commands("git clone https://github.com/burritocatai/bcat-civitai.git")
+    .run_commands(". \"$HOME/.cargo/env\" && cd bcat-civitai && cargo build --release")
+)
+
 image = (
     image.run_commands(  # download a custom node
         "comfy node install was-node-suite-comfyui@1.0.2"
@@ -67,8 +76,14 @@ app = modal.App(name="example-comfyui", image=image)
     max_containers=1,  # limit interactive session to 1 container
     gpu="L40S",  # good starter GPU for inference
     volumes={"/cache": vol},  # mounts our cached models
+    secrets=[modal.Secret.from_name("civitai-api")]
 )
 @modal.web_server(8000, startup_timeout=60)
 def ui():
+    bcat_command = "/bcat-civitai/target/release/bcat-civitai "
+    bcat_command += "--urn urn:air:flux1:checkpoint:civitai:618692@691639 "
+    bcat_command += "--base-dir /root/comfy/ComfyUI/models --comfyui"
+
+    subprocess.Popen(bcat_command, shell=True)
     subprocess.Popen("comfy launch -- --listen 0.0.0.0 --port 8000", shell=True)
 
