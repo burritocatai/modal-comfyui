@@ -12,6 +12,8 @@ RUN python3 -m pip install --upgrade \
     setuptools==75.6.0 \
     gitpython==3.1.41
 
+RUN pip install modal
+
 # [Optional] If your pip requirements rarely change, uncomment this section to add them to the image.
 # COPY requirements.txt /tmp/pip-tmp/
 # RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt \
